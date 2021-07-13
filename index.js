@@ -22,6 +22,7 @@ app.get('/test', (req, res) => {
 
 io.on('connection', (socket) => {
   console.log('hello connect');
+
   socket.on('join', (payload) => {
     socket.join(gameRoom);
     socket
