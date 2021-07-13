@@ -7,21 +7,21 @@ const createGame = (id, player1, player2) => {
     id,
     player1,
     player2,
-    playTurn:player1 ,
-    playBoard:Array(9).fill(null),
+    playTurn: player1,
+    playBoard: Array(9).fill(null),
     // status : 'waiting',
-    theWinner : null,
+    theWinner: null,
   };
   allGames.push(myGame);
   return myGame;
 };
 
-const updateGame = (game)=>{
-  const idx = allGames.findIndex(item => item.id=== game.id);
-  if (idx !== -1){
+const updateGame = (game) => {
+  const idx = allGames.findIndex((item) => item.id === game.id);
+  if (idx !== -1) {
     allGames[idx] = game;
   }
 };
 
-const getGame = id => allGames.find (item => item.id=== id);
-module.exports = {allGames,createGame, updateGame, getGame};
+const getGame = (id) => allGames.find((item) => item.id === id);
+module.exports = { allGames, createGame, updateGame, getGame };

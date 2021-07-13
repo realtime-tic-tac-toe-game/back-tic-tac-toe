@@ -36,7 +36,7 @@ io.on('connection', (socket) => {
   console.log('hello connect');
 
   socket.on('join', (payload) => {
-    // const player = {name: payload.name, id: socket.id};
+    const player = { name: payload.name, id: socket.id };
     // queue.allPlayers.push(player);
     // socket.join(gameRoom);
     socket.to(gameRoom).emit('onlineGamers', player);
@@ -44,7 +44,8 @@ io.on('connection', (socket) => {
 
   socket.on('createGame', (payload) => {
     const gameId = `Game-${gameKey()}`;
-    const player = createPlayer(socket.id, name, gameId, 'X');
+    console.log(gameId);
+    const player = createPlayer(socket.id, payload.name, gameId, 'X');
     const game = createGame(gameId, player.id, null);
     socket.join(gameId);
     socket.emit('creatPlayer', { player });
@@ -76,14 +77,12 @@ io.on('connection', (socket) => {
     console.log('hello claim backend');
     socket.to(payload.playerId).emit('claimed', { name: payload.name });
     // queue.allGames=quque.allGames.filter((item) => item.id !== payload.id);
-    const game = getGame(gameId);
+    const game = getGame(payload.gameId);
     if (game) {
-      return;
+      const yes = 'great';
     } else {
       return 'Incorrect ID ';
     }
-  });
-  socket.on('claim', (payload) => {
     const player = createPlayer(socket.id, name, game.id, 'O');
     game.player2 = player.id;
     updateGame(game);
@@ -92,11 +91,14 @@ io.on('connection', (socket) => {
     socket.emit('creatPlayer', { player });
     socket.emit('updatedGame', { game });
 
+    console.log('after create and update');
+
     socket.broadcast.emit('updatedGame', { game });
     socket.broadcast.emit('notes', {
       message: ` You Are Playing With  ${name}`,
     });
   });
+
   socket.on('getAll', () => {
     queue.allPlayers.forEach((player) => {
       socket.emit('onlineGamers', { name: player.name, id: player.id });
