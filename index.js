@@ -11,12 +11,20 @@ const server = http.createServer(app);
 const io = require('socket.io')(http);
 const gameRoom = 'game';
 const { v4: uuidv4 } = require('uuid');
-// const { Socket } = require('dgram');
+
+const { gameKey, checkWinner } = require('./modules/gameLogic');
+const { allGames, createGame, updateGame, getGame } = require('./modules/game');
+const {
+  allPlayers,
+  createPlayer,
+  getPlayer,
+  removePlayer,
+} = require('./modules/player');
 
 io.listen(server);
 const queue = {
-  allGames: [],
-  allPlayers: [],
+  allGames,
+  allPlayers,
 };
 
 app.use(cors());
@@ -28,30 +36,66 @@ io.on('connection', (socket) => {
   console.log('hello connect');
 
   socket.on('join', (payload) => {
-    const player = { name: payload.name, id: socket.id };
-    queue.allPlayers.push(player);
-    socket.join(gameRoom);
+    // const player = {name: payload.name, id: socket.id};
+    // queue.allPlayers.push(player);
+    // socket.join(gameRoom);
     socket.to(gameRoom).emit('onlineGamers', player);
   });
 
   socket.on('createGame', (payload) => {
-    const gameData = { ...payload, id: uuidv4(), socketId: socket.id };
-    queue.allGames.push(gameData);
-    console.log('hello from create backend', payload);
-    socket.in(gameRoom).emit('newGame', gameData);
+    const gameId = `Game-${gameKey()}`;
+    const player = createPlayer(socket.id, name, gameId, 'X');
+    const game = createGame(gameId, player.id, null);
+    socket.join(gameId);
+    socket.emit('creatPlayer', { player });
+    socket.emit('updatedGame', { game });
 
-    console.log('hello from create ', {
-      ...payload,
-      id: uuidv4(),
-      socketId: socket.id,
+    socket.emit('notes', {
+      message: `The Game ID : ${gameId}`,
     });
-    console.log('Queue', queue);
+
+    socket.emit('notes', {
+      message: `Waiting The Opponent !`,
+    });
+
+    // const gameData = {...payload, id: uuidv4(), socketId: socket.id};
+    // queue.allGames.push(gameData);
+    // console.log('hello from create backend', payload);
+    // socket
+    // .in(gameRoom)
+    // .emit('newGame', gameData);
+    // console.log('hello from create ', {
+    //   ...payload,
+    //   id: uuidv4 (),
+    //   socketId: socket.id,
+    // } )
+    // console.log('Queue',queue);
   });
 
   socket.on('claim', (payload) => {
     console.log('hello claim backend');
     socket.to(payload.playerId).emit('claimed', { name: payload.name });
-    queue.allGames = queue.allGames.filter((item) => item.id !== payload.id);
+    // queue.allGames=quque.allGames.filter((item) => item.id !== payload.id);
+    const game = getGame(gameId);
+    if (game) {
+      return;
+    } else {
+      return 'Incorrect ID ';
+    }
+  });
+  socket.on('claim', (payload) => {
+    const player = createPlayer(socket.id, name, game.id, 'O');
+    game.player2 = player.id;
+    updateGame(game);
+
+    socket.join(gameId);
+    socket.emit('creatPlayer', { player });
+    socket.emit('updatedGame', { game });
+
+    socket.broadcast.emit('updatedGame', { game });
+    socket.broadcast.emit('notes', {
+      message: ` You Are Playing With  ${name}`,
+    });
   });
   socket.on('getAll', () => {
     queue.allPlayers.forEach((player) => {
@@ -63,10 +107,12 @@ io.on('connection', (socket) => {
   });
 
   socket.on('disconnect', () => {
-    socket.to(gameRoom).emit('offlineGamers', { id: socket.id });
-    queue.allPlayers = queue.allPlayers.filter(
-      (player) => player.id !== socket.id
-    );
+    // socket.to(gameRoom).emit('offlineGamers', { id: socket.id });
+    // queue.allPlayers = queue.allPlayers.filter((player) => player.id !== socket.id);
+    const player = getPlayer(socket.id);
+    if (player) {
+      removePlayer(player.id);
+    }
   });
 });
 
