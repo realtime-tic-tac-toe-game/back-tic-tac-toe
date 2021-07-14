@@ -127,16 +127,16 @@ io.on('connection', (socket) => {
       io.in(gameId).emit('endGame', { winner });
       return;
     }
+    const emptySquare = playBoard.findIndex((item) => item === null);
+    if (emptySquare === -1) {
+      game.status = 'ended';
+      updateGame(game);
+      io.in(gameId).emit('updatedGame', { game });
+      io.in(gameId).emit('endGame', { winner: null });
+      return;
+    }
   });
 
-  const emptySquare = playBoard.findIndex((item) => item === null);
-  if (emptySquare === -1) {
-    game.status = 'ended';
-    updateGame(game);
-    io.in(gameId).emit('updatedGame', { game });
-    io.in(gameId).emit('endGame', { winner: null });
-    return;
-  }
 
   socket.on('getAll', () => {
     queue.allPlayers.forEach((player) => {
@@ -151,6 +151,7 @@ io.on('connection', (socket) => {
     // socket.to(gameRoom).emit('offlineGamers', { id: socket.id });
     // queue.allPlayers = queue.allPlayers.filter((player) => player.id !== socket.id);
     const player = getPlayer(socket.id);
+    
     if (player) {
       removePlayer(player.id);
     }
