@@ -9,7 +9,7 @@ const createGame = (id, player1, player2) => {
     player2,
     playTurn: player1,
     playBoard: Array(9).fill(null),
-    // status : 'waiting',
+    status: 'waiting',
     theWinner: null,
   };
   allGames.push(myGame);

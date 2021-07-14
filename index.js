@@ -85,6 +85,7 @@ io.on('connection', (socket) => {
     }
     const player = createPlayer(socket.id, name, game.id, 'O');
     game.player2 = player.id;
+    game.status = 'playing';
     updateGame(game);
 
     socket.join(gameId);
@@ -98,6 +99,44 @@ io.on('connection', (socket) => {
       message: ` You Are Playing With  ${name}`,
     });
   });
+
+  socket.on('playing', (data) => {
+    const { player, squareValue, gameId } = data;
+    const game = getGame(gameId);
+    const { playBoard = [], playTurn, player1, player2 } = game;
+    playBoard[squareValue] = player.symbol;
+    const next = '';
+    if (playTurn === player1) {
+      next = player2;
+    } else {
+      next = player1;
+    }
+    game.playTurn = next;
+    game.playBoard = playBoard;
+    updateGame(game);
+
+    io.in(gameId).emit('updatedGame', { game });
+    const winner = checkWinner(playBoard);
+
+    if (winner) {
+      const finalWinner = { ...winner, player };
+      game.status = 'ended ';
+      updateGame(game);
+
+      io.in(gameId).emit('updatedGame', { game });
+      io.in(gameId).emit('endGame', { winner });
+      return;
+    }
+  });
+
+  const emptySquare = playBoard.findIndex((item) => item === null);
+  if (emptySquare === -1) {
+    game.status = 'ended';
+    updateGame(game);
+    io.in(gameId).emit('updatedGame', { game });
+    io.in(gameId).emit('endGame', { winner: null });
+    return;
+  }
 
   socket.on('getAll', () => {
     queue.allPlayers.forEach((player) => {
