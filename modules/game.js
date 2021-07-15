@@ -24,4 +24,5 @@ const updateGame = (game) => {
 };
 
 const getGame = (id) => allGames.find((item) => item.id === id);
+
 module.exports = { allGames, createGame, updateGame, getGame };

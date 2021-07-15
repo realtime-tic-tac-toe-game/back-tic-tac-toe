@@ -43,7 +43,7 @@ io.on('connection', (socket) => {
   });
 
   socket.on('createGame', (payload) => {
-    const gameId = `Game-${gameKey()}`;
+    const gameId = `ID-${gameKey()}`;
     console.log(gameId);
     const player = createPlayer(socket.id, payload.name, gameId, 'X');
     const game = createGame(gameId, player.id, null);
@@ -75,7 +75,6 @@ io.on('connection', (socket) => {
 
   socket.on('claim', (payload) => {
     console.log('hello claim backend');
-    socket.to(payload.playerId).emit('claimed', { name: payload.name });
     // queue.allGames=quque.allGames.filter((item) => item.id !== payload.id);
     const game = getGame(payload.gameId);
     if (game) {
@@ -83,35 +82,47 @@ io.on('connection', (socket) => {
     } else {
       return 'Incorrect ID ';
     }
-    const player = createPlayer(socket.id, name, game.id, 'O');
-    game.player2 = player.id;
+
+    const player2 = createPlayer(socket.id, payload.name, payload.gameId, 'O');
+    game.player2 = player2.id;
     game.status = 'playing';
     updateGame(game);
 
-    socket.join(gameId);
-    socket.emit('creatPlayer', { player });
+    socket.join(payload.gameId);
+    socket.emit('creatPlayer', { player2 });
     socket.emit('updatedGame', { game });
 
     console.log('after create and update');
 
     socket.broadcast.emit('updatedGame', { game });
     socket.broadcast.emit('notes', {
-      message: ` You Are Playing With  ${name}`,
+      message: ` You Are Playing With  ${payload.name}`,
     });
+
+    socket.to(payload.gameId).emit('claimed', { name: payload.name });
+
+    // socket.emit('claimed', { name: payload.name });
   });
 
   socket.on('playing', (data) => {
+    console.log('clicked from backend');
     const { player, squareValue, gameId } = data;
-    const game = getGame(gameId);
+
+    console.log(data);
+    const game = getGame(data.gameId);
+
+    console.log(game);
     const { playBoard = [], playTurn, player1, player2 } = game;
     playBoard[squareValue] = player.symbol;
-    const next = '';
+    let next = '';
+
     if (playTurn === player1) {
       next = player2;
     } else {
       next = player1;
     }
     game.playTurn = next;
+
     game.playBoard = playBoard;
     updateGame(game);
 
@@ -137,7 +148,6 @@ io.on('connection', (socket) => {
     }
   });
 
-
   socket.on('getAll', () => {
     queue.allPlayers.forEach((player) => {
       socket.emit('onlineGamers', { name: player.name, id: player.id });
@@ -151,7 +161,7 @@ io.on('connection', (socket) => {
     // socket.to(gameRoom).emit('offlineGamers', { id: socket.id });
     // queue.allPlayers = queue.allPlayers.filter((player) => player.id !== socket.id);
     const player = getPlayer(socket.id);
-    
+
     if (player) {
       removePlayer(player.id);
     }
