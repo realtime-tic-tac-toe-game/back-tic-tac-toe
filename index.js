@@ -108,26 +108,33 @@ io.on('connection', (socket) => {
     console.log('clicked from backend');
     const { player, squareValue, gameId } = data;
 
-    console.log(data);
+    // console.log('Tha data in playing',data.player);
     const game = getGame(data.gameId);
 
-    console.log(game);
+    // console.log(game);
     const { playBoard = [], playTurn, player1, player2 } = game;
-    playBoard[squareValue] = player.symbol;
+    // let newValue= player.symbol;
+    // console.log('new value',newValue);
+    // playBoard[squareValue] =newValue;
+    console.log(playBoard);
     let next = '';
-
+    
     if (playTurn === player1) {
       next = player2;
+      playBoard[squareValue] ='X';
     } else {
       next = player1;
+      playBoard[squareValue] ='O';
     }
-    game.playTurn = next;
-
     game.playBoard = playBoard;
+    game.playTurn = next;
+    console.log('before Update',game);
     updateGame(game);
-
+    console.log('after update',game);
     io.in(gameId).emit('updatedGame', { game });
+    
     const winner = checkWinner(playBoard);
+    // io.in(gameId).emit('takeValue', playBoard[squareValue] );
 
     if (winner) {
       const finalWinner = { ...winner, player };
@@ -135,9 +142,12 @@ io.on('connection', (socket) => {
       updateGame(game);
 
       io.in(gameId).emit('updatedGame', { game });
-      io.in(gameId).emit('endGame', { winner });
-      return;
+      
+      io.in(gameId).emit('endGame', { finalWinner });
+      console.log('final winner',finalWinner);
+      return finalWinner;
     }
+    console.log('after emit',game);
     const emptySquare = playBoard.findIndex((item) => item === null);
     if (emptySquare === -1) {
       game.status = 'ended';
