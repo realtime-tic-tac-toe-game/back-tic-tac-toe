@@ -51,13 +51,13 @@ io.on('connection', (socket) => {
     socket.emit('creatPlayer', { player });
     socket.emit('updatedGame', { game });
 
-    socket.emit('notes', {
-      message: `The Game ID : ${gameId}`,
-    });
+    // socket.emit('notes', {
+    //   message: `The Game ID : ${gameId}`,
+    // });
 
-    socket.emit('notes', {
-      message: `Waiting The Opponent !`,
-    });
+    // socket.emit('notes', {
+    //   message: `Waiting The Opponent !`,
+    // });
 
     // const gameData = {...payload, id: uuidv4(), socketId: socket.id};
     // queue.allGames.push(gameData);
@@ -95,9 +95,9 @@ io.on('connection', (socket) => {
     console.log('after create and update');
 
     socket.broadcast.emit('updatedGame', { game });
-    socket.broadcast.emit('notes', {
-      message: ` You Are Playing With  ${name}`,
-    });
+    // socket.broadcast.emit('notes', {
+    //   message: ` You Are Playing With  ${name}`,
+    // });
   });
 
   socket.on('playing', (data) => {
@@ -137,7 +137,6 @@ io.on('connection', (socket) => {
     }
   });
 
-
   socket.on('getAll', () => {
     queue.allPlayers.forEach((player) => {
       socket.emit('onlineGamers', { name: player.name, id: player.id });
@@ -151,7 +150,7 @@ io.on('connection', (socket) => {
     // socket.to(gameRoom).emit('offlineGamers', { id: socket.id });
     // queue.allPlayers = queue.allPlayers.filter((player) => player.id !== socket.id);
     const player = getPlayer(socket.id);
-    
+
     if (player) {
       removePlayer(player.id);
     }
