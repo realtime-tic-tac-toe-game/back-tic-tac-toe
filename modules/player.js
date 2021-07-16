@@ -1,6 +1,7 @@
 'use strict';
 
 const allPlayers = [];
+const Player = require ('./player_model');
 
 const createPlayer = (id, name, gameId,symbol) => {
   const myPlayer = {
@@ -10,6 +11,13 @@ const createPlayer = (id, name, gameId,symbol) => {
     symbol,
   };
   allPlayers.push(myPlayer);
+
+  let newPlayer = new Player ({
+    playerName : name,
+    playerId : id,
+  });
+  newPlayer.save();
+
   return myPlayer;
 };
 const getPlayer = id => allPlayers.find (item => item.id=== id);
