@@ -43,7 +43,7 @@ io.on('connection', (socket) => {
   });
 
   socket.on('createGame', (payload) => {
-    const gameId = `ID-${gameKey()}`;
+    const gameId = `Room${gameKey()}`;
     console.log(gameId);
     const player = createPlayer(socket.id, payload.name, gameId, 'X');
     const game = createGame(gameId, player.id, null);
@@ -76,6 +76,7 @@ io.on('connection', (socket) => {
   socket.on('claim', (payload) => {
     console.log('hello claim backend');
     // queue.allGames=quque.allGames.filter((item) => item.id !== payload.id);
+
     const game = getGame(payload.gameId);
     if (game) {
       const yes = 'great';
@@ -95,9 +96,9 @@ io.on('connection', (socket) => {
     console.log('after create and update');
 
     socket.broadcast.emit('updatedGame', { game });
-    socket.broadcast.emit('notes', {
-      message: ` You Are Playing With  ${payload.name}`,
-    });
+    // socket.broadcast.emit('notes', {
+    //   message: ` You Are Playing With  ${payload.name}`,
+    // });
 
     socket.to(payload.gameId).emit('claimed', { name: payload.name });
 

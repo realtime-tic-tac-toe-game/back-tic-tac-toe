@@ -1,6 +1,6 @@
 'use strict';
 
-const gameKey = (length = 6) => {
+const gameKey = (length = 8) => {
   return Math.random().toString(10).substr(2, length);
 };
 
