@@ -18,7 +18,7 @@ const winning = [
 const checkWinner = (board) => {
   for (let i = 0; i < winning.length; i++) {
     const [x, y, z] = winning[i];
-    if (board[x] && board[x] === board[y] && board[x] === board[z]) {
+    if (board[x] !== 'play' && board[x] === board[y] && board[x] === board[z] && board[y] !== 'play' && board[z] !== 'play'  ) {
       return {
         winning: [x, y, z],
       };

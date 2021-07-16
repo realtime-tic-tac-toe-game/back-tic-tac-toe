@@ -8,7 +8,7 @@ const createGame = (id, player1, player2) => {
     player1,
     player2,
     playTurn: player1,
-    playBoard: Array(9).fill(null),
+    playBoard: Array(9).fill('play'),
     status: 'waiting',
     theWinner: null,
   };

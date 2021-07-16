@@ -21,6 +21,8 @@ const {
   removePlayer,
 } = require('./modules/player');
 
+const PlayerModel = require ('./modules/player_model');
+
 io.listen(server);
 const queue = {
   allGames,
@@ -37,8 +39,6 @@ io.on('connection', (socket) => {
 
   socket.on('join', (payload) => {
     const player = { name: payload.name, id: socket.id };
-    // queue.allPlayers.push(player);
-    // socket.join(gameRoom);
     socket.to(gameRoom).emit('onlineGamers', player);
   });
 
@@ -51,26 +51,6 @@ io.on('connection', (socket) => {
     socket.emit('creatPlayer', { player });
     socket.emit('updatedGame', { game });
 
-    // socket.emit('notes', {
-    //   message: `The Game ID : ${gameId}`,
-    // });
-
-    // socket.emit('notes', {
-    //   message: `Waiting The Opponent !`,
-    // });
-
-    // const gameData = {...payload, id: uuidv4(), socketId: socket.id};
-    // queue.allGames.push(gameData);
-    // console.log('hello from create backend', payload);
-    // socket
-    // .in(gameRoom)
-    // .emit('newGame', gameData);
-    // console.log('hello from create ', {
-    //   ...payload,
-    //   id: uuidv4 (),
-    //   socketId: socket.id,
-    // } )
-    // console.log('Queue',queue);
   });
 
   socket.on('claim', (payload) => {
@@ -96,13 +76,9 @@ io.on('connection', (socket) => {
     console.log('after create and update');
 
     socket.broadcast.emit('updatedGame', { game });
-    // socket.broadcast.emit('notes', {
-    //   message: ` You Are Playing With  ${payload.name}`,
-    // });
 
     socket.to(payload.gameId).emit('claimed', { name: payload.name });
 
-    // socket.emit('claimed', { name: payload.name });
   });
 
   socket.on('playing', (data) => {
@@ -112,11 +88,7 @@ io.on('connection', (socket) => {
     // console.log('Tha data in playing',data.player);
     const game = getGame(data.gameId);
 
-    // console.log(game);
     const { playBoard = [], playTurn, player1, player2 } = game;
-    // let newValue= player.symbol;
-    // console.log('new value',newValue);
-    // playBoard[squareValue] =newValue;
     console.log(playBoard);
     let next = '';
 
@@ -135,7 +107,7 @@ io.on('connection', (socket) => {
     io.in(gameId).emit('updatedGame', { game });
 
     const winner = checkWinner(playBoard);
-    // io.in(gameId).emit('takeValue', playBoard[squareValue] );
+    console.log('The winner',winner);
 
     if (winner) {
       const finalWinner = { ...winner, player };
@@ -168,17 +140,27 @@ io.on('connection', (socket) => {
     });
   });
 
-  socket.on('disconnect', () => {
-    // socket.to(gameRoom).emit('offlineGamers', { id: socket.id });
-    // queue.allPlayers = queue.allPlayers.filter((player) => player.id !== socket.id);
-    const player = getPlayer(socket.id);
-
-    if (player) {
-      removePlayer(player.id);
-    }
+  socket.on('allPlayer',async ()=> {
+    await PlayerModel.find({},(err,data) => {
+      console.log(data);
+      socket.emit('getAllPlayer', data)
+    })
   });
+
+  socket.on('refreshGame', (payload)=>{
+    let gameId = payload.gameId;
+    const player1 = payload.player1;
+    const player2 = payload.player2
+    const game = createGame(gameId, player1, player2);
+  
+    console.log('after create',game);
+   
+  })
 });
 
 server.listen(port, () => {
   console.log(`Listening on PORT ${port}`);
 });
+
+// PORT=5000
+// MONGODB_URI= mongodb://localhost:27017/players
