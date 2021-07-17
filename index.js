@@ -7,6 +7,7 @@ const http = require('http');
 const app = express();
 const port = process.env.PORT || 5000;
 const server = http.createServer(app);
+const mongoose = require('mongoose');
 
 const io = require('socket.io')(http);
 const gameRoom = 'game';
@@ -18,10 +19,11 @@ const {
   allPlayers,
   createPlayer,
   getPlayer,
-  removePlayer,
+  // removePlayer,
 } = require('./modules/player');
 
-const PlayerModel = require ('./modules/player_model');
+const ChatModel = require('./modules/chat_model');
+const PlayerModel = require('./modules/player_model');
 
 io.listen(server);
 const queue = {
@@ -30,6 +32,7 @@ const queue = {
 };
 
 app.use(cors());
+
 app.get('/test', (req, res) => {
   res.send('Hello From Hiba and Sukina !');
 });
@@ -50,7 +53,6 @@ io.on('connection', (socket) => {
     socket.join(gameId);
     socket.emit('creatPlayer', { player });
     socket.emit('updatedGame', { game });
-
   });
 
   socket.on('claim', (payload) => {
@@ -78,7 +80,6 @@ io.on('connection', (socket) => {
     socket.broadcast.emit('updatedGame', { game });
 
     socket.to(payload.gameId).emit('claimed', { name: payload.name });
-
   });
 
   socket.on('playing', (data) => {
@@ -107,7 +108,7 @@ io.on('connection', (socket) => {
     io.in(gameId).emit('updatedGame', { game });
 
     const winner = checkWinner(playBoard);
-    console.log('The winner',winner);
+    console.log('The winner', winner);
 
     if (winner) {
       const finalWinner = { ...winner, player };
@@ -140,27 +141,44 @@ io.on('connection', (socket) => {
     });
   });
 
-  socket.on('allPlayer',async ()=> {
-    await PlayerModel.find({},(err,data) => {
+  socket.on('allPlayer', async () => {
+    await PlayerModel.find({}, (err, data) => {
       console.log(data);
-      socket.emit('getAllPlayer', data)
-    })
+      socket.emit('getAllPlayer', data);
+    });
   });
 
-  socket.on('refreshGame', (payload)=>{
+  socket.on('chatSend', (data) => {
+    // const { name, massage } = data;
+    console.log(data);
+
+    let newChat = new ChatModel(data);
+    newChat.save();
+  });
+
+  setInterval(() => {
+    ChatModel.find({}, (err, data) => {
+      // console.log(data);
+      socket.emit('getChat', data);
+    });
+  }, 500);
+
+  socket.on('refreshGame', (payload) => {
     let gameId = payload.gameId;
     const player1 = payload.player1;
-    const player2 = payload.player2
+    const player2 = payload.player2;
     const game = createGame(gameId, player1, player2);
-  
-    console.log('after create',game);
-   
-  })
+
+    console.log('after create', game);
+  });
+});
+
+mongoose.connect(process.env.MONGODB_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+  useFindAndModify: false,
 });
 
 server.listen(port, () => {
   console.log(`Listening on PORT ${port}`);
 });
-
-// PORT=5000
-// MONGODB_URI= mongodb://localhost:27017/players
