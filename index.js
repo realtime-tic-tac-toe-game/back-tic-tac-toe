@@ -164,7 +164,7 @@ io.on('connection', (socket) => {
   }, 500);
 
   socket.on('refreshGame', (payload) => {
-    let gameId = payload.gameId;
+    let gameId = `Room${gameKey()}`;
     const player1 = payload.player1;
     const player2 = payload.player2;
     const game = createGame(gameId, player1, player2);
